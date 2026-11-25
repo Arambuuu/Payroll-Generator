@@ -18,6 +18,15 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+      // apply saved theme before paint (default: light)
+      try {
+        document.documentElement.setAttribute(
+          "data-theme",
+          localStorage.getItem("theme") || "light",
+        );
+      } catch (e) {}
+    </script>
     <style id="print-style"></style>
     <style>
       *,
@@ -45,7 +54,6 @@
         --destructive-light: 0 84% 96%;
         --radius: 0.625rem;
 
-        /* payslip brand accents — kept distinct from app chrome */
         --accent: #1a5c38;
         --accent-light: #e8f2ec;
         --accent2: #c8a84b;
@@ -90,12 +98,15 @@
         background: hsl(var(--muted));
         color: hsl(var(--foreground));
         min-height: 100vh;
-        padding: 0 0 24px;
+        padding: 0 0 32px;
         transition: background 0.25s, color 0.25s;
         -webkit-font-smoothing: antialiased;
       }
+      button {
+        font-family: inherit;
+      }
 
-      /* ── Navbar (matches app shell used across Bridge tools) ── */
+      /* ── Navbar ── */
       .navbar {
         border-bottom: 1px solid hsl(var(--border));
         background: hsl(var(--card));
@@ -103,12 +114,13 @@
         margin-bottom: 24px;
       }
       .navbar-inner {
-        max-width: 1200px;
+        max-width: 1280px;
         margin: 0 auto;
-        padding: 16px 24px;
+        padding: 14px 24px;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 12px;
       }
       .navbar-brand {
         display: flex;
@@ -128,8 +140,44 @@
         font-weight: 700;
         flex-shrink: 0;
       }
+      .navbar-title {
+        font-size: 14.5px;
+        font-weight: 600;
+      }
+      .navbar-sub {
+        font-size: 11.5px;
+        color: hsl(var(--muted-foreground));
+      }
+      .navbar-right {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .save-status {
+        font-size: 11.5px;
+        color: hsl(var(--muted-foreground));
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 96px;
+        justify-content: flex-end;
+      }
+      .save-status i {
+        font-size: 11px;
+      }
+      .save-status.saved i {
+        color: var(--accent);
+      }
+      .save-status.error {
+        color: hsl(var(--destructive));
+      }
+      .nav-divider {
+        width: 1px;
+        height: 20px;
+        background: hsl(var(--border));
+      }
 
-      /* ── Theme toggle (shadcn switch) ── */
+      /* ── Theme toggle ── */
       .theme-toggle {
         display: flex;
         align-items: center;
@@ -168,31 +216,29 @@
         transform: translateX(16px);
       }
 
-      .navbar-title {
-        font-size: 14.5px;
-        font-weight: 600;
-        color: hsl(var(--foreground));
-      }
-      .navbar-sub {
-        font-size: 11.5px;
-        color: hsl(var(--muted-foreground));
-      }
-
+      /* ── Layout ── */
       .app-grid {
         display: grid;
-        grid-template-columns: 420px 1fr;
+        grid-template-columns: 430px 1fr;
         gap: 20px;
-        max-width: 1200px;
+        max-width: 1280px;
         margin: 0 auto;
         padding: 0 24px;
+        align-items: start;
       }
-      @media (max-width: 900px) {
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-width: 0;
+      }
+      @media (max-width: 960px) {
         .app-grid {
           grid-template-columns: 1fr;
         }
       }
 
-      /* ── shadcn card / panel ── */
+      /* ── Panels ── */
       .panel {
         background: hsl(var(--card));
         border: 1px solid hsl(var(--border));
@@ -202,38 +248,55 @@
         transition: background 0.25s, border-color 0.25s;
       }
       .panel-head {
-        padding: 14px 20px;
+        padding: 12px 18px;
         border-bottom: 1px solid hsl(var(--border));
         display: flex;
         align-items: center;
         gap: 8px;
-        transition: border-color 0.25s;
+        flex-wrap: wrap;
+      }
+      .panel-head .spacer {
+        flex: 1;
       }
       .panel-head-dot {
         width: 7px;
         height: 7px;
         border-radius: 50%;
         background: var(--accent);
-        transition: background 0.25s;
       }
       .panel-head-title {
-        font-size: 12.5px;
+        font-size: 12px;
         font-weight: 500;
         color: hsl(var(--muted-foreground));
         text-transform: uppercase;
         letter-spacing: 0.06em;
       }
       .panel-body {
-        padding: 20px;
+        padding: 18px;
+      }
+      .preview-panel {
+        position: sticky;
+        top: 16px;
+        max-height: calc(100vh - 32px);
+        overflow: auto;
+      }
+      @media (max-width: 960px) {
+        .preview-panel {
+          position: static;
+          max-height: none;
+        }
       }
 
+      /* ── Fields ── */
       .field-block {
         margin-bottom: 14px;
+      }
+      .field-block:last-child {
+        margin-bottom: 0;
       }
       .field-label {
         font-size: 12.5px;
         font-weight: 500;
-        color: hsl(var(--foreground));
         margin-bottom: 6px;
         display: block;
       }
@@ -248,7 +311,6 @@
         grid-template-columns: 1fr 80px 1fr;
       }
 
-      /* ── shadcn inputs ── */
       input[type="text"],
       input[type="number"],
       input[type="date"],
@@ -268,18 +330,13 @@
         -webkit-appearance: none;
         box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.02);
       }
-      input[type="text"]:focus,
-      input[type="number"]:focus,
-      input[type="date"]:focus,
+      input:focus,
       select:focus {
         border-color: hsl(var(--ring));
         box-shadow: 0 0 0 3px hsl(var(--ring) / 0.15);
       }
       input::placeholder {
         color: hsl(var(--muted-foreground));
-      }
-      input[type="date"]::-webkit-datetime-edit {
-        color: hsl(var(--foreground));
       }
       input[type="date"]::-webkit-calendar-picker-indicator {
         opacity: 0.5;
@@ -288,7 +345,6 @@
       [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
         filter: invert(0.85);
       }
-
       .select-wrap {
         position: relative;
       }
@@ -302,8 +358,6 @@
         right: 12px;
         top: 50%;
         transform: translateY(-50%);
-        width: 0;
-        height: 0;
         border-left: 4px solid transparent;
         border-right: 4px solid transparent;
         border-top: 5px solid hsl(var(--muted-foreground));
@@ -320,7 +374,29 @@
         padding: 2px 8px;
         margin-left: 6px;
         vertical-align: middle;
-        transition: background 0.25s, color 0.25s;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .chip {
+        height: 26px;
+        padding: 0 10px;
+        border-radius: 999px;
+        border: 1px solid hsl(var(--border));
+        background: hsl(var(--card));
+        color: hsl(var(--muted-foreground));
+        font-size: 11.5px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .chip:hover {
+        background: hsl(var(--muted));
+        color: hsl(var(--foreground));
       }
 
       .section-sep {
@@ -335,12 +411,251 @@
         text-transform: uppercase;
         letter-spacing: 0.07em;
         margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
       }
 
+      /* ── Buttons ── */
+      .btn {
+        height: 38px;
+        padding: 0 16px;
+        border-radius: var(--radius);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.15s;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+      .btn:active {
+        transform: translateY(0.5px);
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+      .btn-sm {
+        height: 32px;
+        padding: 0 12px;
+        font-size: 12.5px;
+      }
+      .btn-primary {
+        background: hsl(var(--primary));
+        color: hsl(var(--primary-foreground));
+      }
+      .btn-primary:hover {
+        background: hsl(var(--primary) / 0.9);
+      }
+      .btn-secondary {
+        background: hsl(var(--card));
+        color: hsl(var(--foreground));
+        border-color: hsl(var(--border));
+      }
+      .btn-secondary:hover {
+        background: hsl(var(--muted));
+      }
+      .icon-btn {
+        width: 30px;
+        height: 30px;
+        border: 1px solid transparent;
+        background: none;
+        border-radius: var(--radius);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: hsl(var(--muted-foreground));
+        font-size: 13px;
+        flex-shrink: 0;
+        transition: all 0.15s;
+      }
+      .icon-btn:hover {
+        background: hsl(var(--muted));
+        color: hsl(var(--foreground));
+      }
+      .icon-btn.danger:hover {
+        background: hsl(var(--destructive-light));
+        color: hsl(var(--destructive));
+      }
+      .link-btn {
+        background: none;
+        border: none;
+        color: hsl(var(--muted-foreground));
+        font-size: 11.5px;
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        text-transform: none;
+        letter-spacing: 0;
+        font-weight: 500;
+      }
+      .link-btn:hover {
+        color: hsl(var(--foreground));
+      }
+
+      /* ── Roster ── */
+      .roster {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+        margin-bottom: 8px;
+      }
+      .emp-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 6px 6px 10px;
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        transition: background 0.15s, border-color 0.15s;
+        animation: slideIn 0.15s ease;
+      }
+      .emp-item:hover {
+        background: hsl(var(--muted) / 0.6);
+      }
+      .emp-item.active {
+        background: hsl(var(--muted));
+        border-color: hsl(var(--border));
+      }
+      .emp-check {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--accent);
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .emp-main {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        text-align: left;
+        color: inherit;
+        padding: 2px 0;
+      }
+      .emp-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--accent-light);
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .emp-meta {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .emp-name {
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .emp-name.empty {
+        color: hsl(var(--muted-foreground));
+        font-style: italic;
+        font-weight: 400;
+      }
+      .emp-sub {
+        font-size: 11px;
+        color: hsl(var(--muted-foreground));
+        font-family: "DM Mono", monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .add-row-btn {
+        width: 100%;
+        height: 34px;
+        border: 1px dashed hsl(var(--border));
+        background: none;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-size: 12.5px;
+        color: hsl(var(--muted-foreground));
+        transition: all 0.15s;
+      }
+      .add-row-btn:hover {
+        background: hsl(var(--muted));
+        color: hsl(var(--foreground));
+        border-color: hsl(var(--muted-foreground));
+      }
+      .add-row-btn.emp {
+        font-weight: 500;
+        color: var(--accent);
+        border-color: var(--accent);
+        background: var(--accent-light);
+      }
+      .add-row-btn.emp:hover {
+        filter: brightness(0.97);
+      }
+      .roster-empty {
+        text-align: center;
+        padding: 18px 0;
+        font-size: 12.5px;
+        color: hsl(var(--muted-foreground));
+      }
+
+      /* ── Totals strip ── */
+      .totals {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .total-box {
+        background: hsl(var(--muted));
+        border-radius: var(--radius);
+        padding: 8px 10px;
+      }
+      .total-box span {
+        display: block;
+        font-size: 10.5px;
+        color: hsl(var(--muted-foreground));
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .total-box strong {
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .total-box.net {
+        background: var(--slip-net-bg);
+      }
+      .total-box.net span {
+        color: rgba(255, 255, 255, 0.75);
+      }
+      .total-box.net strong {
+        color: #fff;
+      }
+
+      /* ── Entry rows ── */
       .entries-list {
         display: flex;
         flex-direction: column;
         gap: 6px;
+      }
+      .entries-list:not(:empty) {
+        margin-bottom: 6px;
       }
       .entry-row {
         display: flex;
@@ -360,119 +675,58 @@
       }
       .entry-row input.label-input {
         flex: 1;
+        min-width: 0;
       }
       .entry-row input.days-input {
-        width: 80px;
+        width: 78px;
       }
       .entry-row input.amount-input {
-        width: 110px;
+        width: 104px;
         font-family: "DM Mono", monospace;
         font-size: 12px;
       }
-      .remove-btn {
-        width: 30px;
-        height: 30px;
-        border: 1px solid hsl(var(--border));
-        background: hsl(var(--card));
+
+      /* ── Preview ── */
+      .seg {
+        display: inline-flex;
+        background: hsl(var(--muted));
         border-radius: var(--radius);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: hsl(var(--muted-foreground));
-        font-size: 15px;
-        line-height: 1;
-        flex-shrink: 0;
-        transition: all 0.15s;
+        padding: 2px;
       }
-      .remove-btn:hover {
-        background: hsl(var(--destructive-light));
-        border-color: hsl(var(--destructive));
-        color: hsl(var(--destructive));
-      }
-      .add-row-btn {
-        width: 100%;
-        height: 32px;
-        margin-top: 6px;
-        border: 1px dashed hsl(var(--border));
+      .seg button {
+        border: 0;
         background: none;
-        border-radius: var(--radius);
-        cursor: pointer;
-        font-family: "Inter", sans-serif;
-        font-size: 12.5px;
-        color: hsl(var(--muted-foreground));
-        transition: all 0.15s;
-      }
-      .add-row-btn:hover {
-        background: hsl(var(--muted));
-        color: hsl(var(--foreground));
-        border-color: hsl(var(--muted-foreground));
-      }
-
-      .actions {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-top: 20px;
-        padding-top: 18px;
-        border-top: 1px solid hsl(var(--border));
-      }
-      .btn {
-        height: 38px;
-        border-radius: var(--radius);
-        font-family: "Inter", sans-serif;
-        font-size: 13px;
+        height: 28px;
+        padding: 0 11px;
+        font-size: 12px;
         font-weight: 500;
+        border-radius: calc(var(--radius) - 2px);
+        color: hsl(var(--muted-foreground));
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        transition: all 0.15s;
-        border: 1px solid transparent;
       }
-      .btn:active { transform: translateY(0.5px); }
-      .btn-primary {
-        background: hsl(var(--primary));
-        color: hsl(var(--primary-foreground));
-        border: none;
-      }
-      .btn-primary:hover {
-        background: hsl(var(--primary) / 0.9);
-      }
-      .btn-secondary {
+      .seg button.on {
         background: hsl(var(--card));
         color: hsl(var(--foreground));
-        border: 1px solid hsl(var(--border));
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
       }
-      .btn-secondary:hover {
-        background: hsl(var(--muted));
-      }
-      .btn svg {
-        width: 15px;
-        height: 15px;
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 2;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
-
-      .preview-bg {
-        border-radius: 10px;
-        padding: 20px;
+      .preview-info {
+        font-size: 11.5px;
+        color: hsl(var(--muted-foreground));
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
       }
       #copiesGrid {
         display: grid;
         gap: 16px;
         grid-template-columns: 1fr 1fr;
       }
-      @media (max-width: 600px) {
+      @media (max-width: 640px) {
         #copiesGrid {
           grid-template-columns: 1fr;
         }
       }
-
       .copy-label {
         font-size: 10px;
         font-weight: 500;
@@ -482,8 +736,15 @@
         text-align: center;
         margin-bottom: 6px;
       }
+      .preview-empty {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 48px 0;
+        color: hsl(var(--muted-foreground));
+        font-size: 13px;
+      }
 
-      /* ── Slip styles — the printed payslip keeps its own brand identity ── */
+      /* ── Slip — keeps its own brand identity ── */
       .slip {
         background: var(--slip-bg);
         border: 1px solid var(--slip-border);
@@ -507,7 +768,6 @@
         font-weight: 600;
         color: var(--slip-company-color);
         letter-spacing: -0.02em;
-        transition: color 0.25s;
       }
       .slip-word {
         font-size: 9px;
@@ -531,7 +791,6 @@
         border-radius: 6px;
         padding: 10px 12px;
         margin-bottom: 12px;
-        transition: background 0.25s;
       }
       .slip-info-item {
         font-size: 10px;
@@ -551,7 +810,6 @@
         text-transform: uppercase;
         letter-spacing: 0.08em;
         margin-bottom: 5px;
-        transition: color 0.25s;
       }
       .slip-lines {
         margin-bottom: 6px;
@@ -559,6 +817,7 @@
       .slip-line {
         display: flex;
         justify-content: space-between;
+        gap: 8px;
         padding: 3px 0;
         font-size: 10.5px;
         color: hsl(var(--muted-foreground));
@@ -571,6 +830,7 @@
         font-family: "DM Mono", monospace;
         font-weight: 500;
         color: hsl(var(--foreground));
+        white-space: nowrap;
       }
       .slip-subtotal {
         display: flex;
@@ -582,7 +842,6 @@
       }
       .slip-subtotal .amount {
         font-family: "DM Mono", monospace;
-        color: hsl(var(--muted-foreground));
       }
       .slip-net {
         background: var(--slip-net-bg);
@@ -592,7 +851,6 @@
         justify-content: space-between;
         align-items: center;
         margin-top: 8px;
-        transition: background 0.25s;
       }
       .slip-net-label {
         font-size: 10px;
@@ -623,20 +881,77 @@
         min-width: 80px;
       }
 
-      /* ── Print / PDF ── */
-      .pdf-mode {
-        background: #ffffff !important;
+      /* ── Toast ── */
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        transform: translate(-50%, 20px);
+        background: hsl(var(--primary));
+        color: hsl(var(--primary-foreground));
+        padding: 10px 14px;
+        border-radius: var(--radius);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.25s;
+        z-index: 50;
+        box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
       }
-      .pdf-mode .preview-bg {
-        background: #ffffff !important;
+      #toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+        pointer-events: auto;
       }
-      .pdf-mode .slip {
-        box-shadow: none !important;
-        border: 1px solid #ccc;
+      #toast button {
+        background: none;
+        border: none;
+        color: inherit;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        text-decoration: underline;
       }
-      .pdf-mode #printArea {
-        background: #fff !important;
-        padding: 10px;
+
+      /* ── Print / PDF root (built on demand) ── */
+      #printRoot {
+        display: none;
+        background: #fff;
+      }
+      .print-page {
+        break-after: page;
+        page-break-after: always;
+      }
+      .print-page:last-child {
+        break-after: auto;
+        page-break-after: auto;
+      }
+      .print-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        align-items: start;
+      }
+      .pdf-clone {
+        display: block;
+        background: #fff;
+      }
+      .pdf-clone .slip {
+        break-inside: avoid;
+      }
+
+      @media (max-width: 560px) {
+        .navbar-sub,
+        .nav-divider,
+        .save-status span {
+          display: none;
+        }
+        .field-row.cols3-salary {
+          grid-template-columns: 1fr 70px 1fr;
+        }
       }
     </style>
   </head>
@@ -651,18 +966,25 @@
           </div>
         </div>
 
-        <!-- Dark mode toggle -->
-        <label
-          class="theme-toggle"
-          title="Toggle dark mode"
-          onclick="toggleTheme()"
-        >
-          <span class="icon sun-icon"><i class="fa-regular fa-sun"></i></span>
-          <div class="toggle-track">
-            <div class="toggle-thumb"></div>
-          </div>
-          <span class="icon moon-icon"><i class="fa-regular fa-moon"></i></span>
-        </label>
+        <div class="navbar-right">
+          <div class="save-status" id="saveStatus"></div>
+          <button class="icon-btn" title="Export backup (.json)" onclick="exportData()">
+            <i class="fa-solid fa-download"></i>
+          </button>
+          <button class="icon-btn" title="Import backup" onclick="$('importFile').click()">
+            <i class="fa-solid fa-upload"></i>
+          </button>
+          <button class="icon-btn danger" title="Clear all saved data" onclick="clearAll()">
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden />
+          <div class="nav-divider"></div>
+          <label class="theme-toggle" title="Toggle dark mode" onclick="toggleTheme()">
+            <span class="icon"><i class="fa-regular fa-sun"></i></span>
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+            <span class="icon"><i class="fa-regular fa-moon"></i></span>
+          </label>
+        </div>
       </div>
     </div>
 
@@ -675,7 +997,6 @@
       <option value="Ra Ashni Aram D. Piloto"></option>
       <option value="Maricel A. Lopez"></option>
     </datalist>
-
     <datalist id="employeePositionsList">
       <option value="Web Developer"></option>
       <option value="Accounting Staff"></option>
@@ -691,430 +1012,882 @@
       <option value="Finance Officer"></option>
       <option value="Operations Manager"></option>
     </datalist>
+    <datalist id="earningLabels">
+      <option value="Overtime pay"></option>
+      <option value="Holiday pay"></option>
+      <option value="Allowance"></option>
+      <option value="Incentive"></option>
+      <option value="Bonus"></option>
+      <option value="13th month pay"></option>
+    </datalist>
+    <datalist id="deductionLabels">
+      <option value="SSS contribution"></option>
+      <option value="PhilHealth"></option>
+      <option value="Pag-IBIG"></option>
+      <option value="Withholding tax"></option>
+      <option value="Cash advance"></option>
+      <option value="Late / Undertime"></option>
+    </datalist>
 
     <div class="app-grid">
-      <div class="panel form-panel">
-        <div class="panel-head">
-          <div class="panel-head-dot"></div>
-          <span class="panel-head-title">Payslip Details</span>
+      <!-- ═════════ LEFT: setup + roster + editor ═════════ -->
+      <div class="col">
+        <!-- Pay run -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-head-dot"></div>
+            <span class="panel-head-title">Pay run</span>
+            <span class="paper-badge" id="paperBadge" style="margin-left:auto"></span>
+          </div>
+          <div class="panel-body">
+            <div class="field-block">
+              <label class="field-label">Company</label>
+              <div class="select-wrap"><select id="company"></select></div>
+            </div>
+
+            <div class="field-block">
+              <label class="field-label">Pay period</label>
+              <div class="field-row cols2">
+                <input type="date" id="periodFrom" />
+                <input type="date" id="periodTo" />
+              </div>
+              <div class="chips">
+                <button class="chip" data-period="full">Full month</button>
+                <button class="chip" data-period="h1">1st – 15th</button>
+                <button class="chip" data-period="h2">16th – end</button>
+                <button class="chip" data-period="next">Next month →</button>
+              </div>
+            </div>
+
+            <div class="field-block">
+              <div class="field-row cols2">
+                <div>
+                  <label class="field-label">Paper size</label>
+                  <div class="select-wrap">
+                    <select id="paperSize">
+                      <option value="a4">A4 · Landscape · 2 copies</option>
+                      <option value="long">Long Bond · Portrait · 2 employees/page</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label class="field-label">Prepared by</label>
+                  <input type="text" id="preparedBy" placeholder="Name" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="panel-body">
-          <div class="field-block">
-            <label class="field-label">
-              Paper size
-              <span class="paper-badge" id="paperBadge"
-                >A4 · Landscape · 2 copies</span
-              >
-            </label>
-            <div class="select-wrap">
-              <select id="paperSize">
-                <option value="a4">
-                  A4 (210 × 297 mm) — Landscape, 2 copies
-                </option>
-                <option value="long">
-                  Long Bond (216 × 330 mm) — Portrait, 4 copies
-                </option>
-              </select>
-            </div>
+
+        <!-- Roster -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-head-dot" style="background: var(--accent2)"></div>
+            <span class="panel-head-title" id="rosterTitle">Employees</span>
+            <span class="spacer"></span>
+            <button class="link-btn" id="toggleAll"></button>
           </div>
-
-          <div class="field-block">
-            <label class="field-label">Company name</label>
-            <div class="select-wrap">
-              <select id="company">
-                <option
-                  value="Bridge Digital Transformations, Inc."
-                  data-logo="https://ik.imagekit.io/Araminbridge/BridgePRO/Untitled%20design.png"
-                >
-                  Bridge Digital Transformations, Inc.
-                </option>
-                <option
-                  value="Mindanamics Corporation"
-                  data-logo="https://ik.imagekit.io/Araminbridge/BridgePRO/Mindanamics1.png?updatedAt=1776409947662"
-                >
-                  Mindanamics Corporation
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field-block">
-            <label class="field-label">Pay period</label>
-            <div class="field-row cols2">
-              <input type="date" id="periodFrom" />
-              <input type="date" id="periodTo" />
-            </div>
-          </div>
-
-          <div class="section-sep"></div>
-          <div class="section-title">Employee information</div>
-
-          <div class="field-block">
-            <label class="field-label">Name</label>
-            <input
-              type="text"
-              id="empName"
-              list="employeeNamesList"
-              placeholder="Select or type employee name"
-            />
-          </div>
-
-          <div class="field-block">
-            <label class="field-label">Position &amp; department</label>
-            <div class="field-row cols2">
-              <input
-                type="text"
-                id="empPos"
-                list="employeePositionsList"
-                placeholder="Position"
-              />
-              <input
-                type="text"
-                id="empDept"
-                placeholder="Department"
-                value="BDTI"
-              />
-            </div>
-          </div>
-
-          <div class="field-block">
-            <label class="field-label"
-              >Emp ID, Days Rendered &amp; Basic Salary</label
-            >
-            <div class="field-row cols3-salary">
-              <input type="text" id="empId" placeholder="EMP-001" />
-              <input
-                type="number"
-                id="basicDays"
-                placeholder="Days"
-                min="0"
-                step="0.5"
-              />
-              <input
-                type="number"
-                id="basicSalary"
-                placeholder="Amount (0.00)"
-                min="0"
-                step="0.01"
-              />
-            </div>
-          </div>
-
-          <div class="section-sep"></div>
-          <div class="section-title">Earnings</div>
-          <div class="entries-list" id="earningsContainer"></div>
-          <button
-            class="add-row-btn"
-            onclick="addRow('earningsContainer', 'earning')"
-          >
-            + add earning
-          </button>
-
-          <div class="section-sep"></div>
-          <div class="section-title">Deductions</div>
-          <div class="entries-list" id="deductionsContainer"></div>
-          <button
-            class="add-row-btn"
-            onclick="addRow('deductionsContainer', 'deduction')"
-          >
-            + add deduction
-          </button>
-
-          <div class="actions">
-            <button class="btn btn-primary" onclick="printPayslip()">
-              <svg viewBox="0 0 24 24">
-                <polyline points="6 9 6 2 18 2 18 9" />
-                <path
-                  d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"
-                />
-                <rect x="6" y="14" width="12" height="8" />
-              </svg>
-              Print payslip
+          <div class="panel-body">
+            <div class="roster" id="roster"></div>
+            <button class="add-row-btn emp" onclick="addEmployee()">
+              <i class="fa-solid fa-user-plus"></i>&nbsp; Add new employee
             </button>
-            <button class="btn btn-secondary" onclick="downloadPDF()">
-              <svg viewBox="0 0 24 24">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Download PDF
-            </button>
+          </div>
+        </div>
+
+        <!-- Editor -->
+        <div class="panel" id="editorPanel">
+          <div class="panel-head">
+            <div class="panel-head-dot" style="background: #349083"></div>
+            <span class="panel-head-title" id="editorTitle">Employee details</span>
+          </div>
+          <div class="panel-body">
+            <div class="totals">
+              <div class="total-box"><span>Gross</span><strong id="tGross">₱ 0.00</strong></div>
+              <div class="total-box"><span>Deductions</span><strong id="tDed">₱ 0.00</strong></div>
+              <div class="total-box net"><span>Net pay</span><strong id="tNet">₱ 0.00</strong></div>
+            </div>
+
+            <div class="field-block">
+              <label class="field-label">Name</label>
+              <input type="text" id="empName" list="employeeNamesList" placeholder="Select or type employee name" />
+            </div>
+
+            <div class="field-block">
+              <label class="field-label">Position &amp; department</label>
+              <div class="field-row cols2">
+                <input type="text" id="empPos" list="employeePositionsList" placeholder="Position" />
+                <input type="text" id="empDept" placeholder="Department" />
+              </div>
+            </div>
+
+            <div class="field-block">
+              <label class="field-label">Emp ID, days rendered &amp; basic salary</label>
+              <div class="field-row cols3-salary">
+                <input type="text" id="empId" placeholder="EMP-001" />
+                <input type="number" id="basicDays" placeholder="Days" min="0" step="0.5" />
+                <input type="number" id="basicSalary" placeholder="Amount (0.00)" min="0" step="0.01" />
+              </div>
+            </div>
+
+            <div class="section-sep"></div>
+            <div class="section-title">Earnings</div>
+            <div class="entries-list" id="earningsContainer"></div>
+            <button class="add-row-btn" onclick="addRow('earnings')">+ add earning</button>
+
+            <div class="section-sep"></div>
+            <div class="section-title">Deductions</div>
+            <div class="entries-list" id="deductionsContainer"></div>
+            <button class="add-row-btn" onclick="addRow('deductions')">+ add deduction</button>
           </div>
         </div>
       </div>
 
+      <!-- ═════════ RIGHT: preview ═════════ -->
       <div class="panel preview-panel">
         <div class="panel-head">
           <div class="panel-head-dot" style="background: var(--accent2)"></div>
-          <span class="panel-head-title">Live Preview</span>
-        </div>
-        <div class="panel-body" id="printArea">
-          <div class="preview-bg">
-            <div id="copiesGrid"></div>
+          <span class="panel-head-title">Live preview</span>
+          <span class="spacer"></span>
+          <div class="seg" id="scopeSeg">
+            <button data-scope="current">Current</button>
+            <button data-scope="all" id="scopeAllBtn">All selected</button>
           </div>
+          <button class="btn btn-primary btn-sm" id="printBtn" onclick="printPayslip()">
+            <i class="fa-solid fa-print"></i> <span id="printLabel">Print</span>
+          </button>
+          <button class="btn btn-secondary btn-sm" id="pdfBtn" onclick="downloadPDF()">
+            <i class="fa-solid fa-file-arrow-down"></i> PDF
+          </button>
+        </div>
+        <div class="panel-body">
+          <div class="preview-info" id="previewInfo"></div>
+          <div id="copiesGrid"></div>
         </div>
       </div>
     </div>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3952128160937709"
-     crossorigin="anonymous"></script>
+
+    <div id="printRoot" data-theme="light"></div>
+    <div id="toast"></div>
+
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3952128160937709"
+      crossorigin="anonymous"
+    ></script>
     <script>
       const $ = (id) => document.getElementById(id);
+      const esc = (s) =>
+        String(s ?? "").replace(
+          /[&<>"']/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+        );
+      const uid = () => Math.random().toString(36).slice(2, 10);
+      const pad = (n) => String(n).padStart(2, "0");
 
-      /* ── Dark mode ── */
-      function toggleTheme() {
-        const html = document.documentElement;
-        const isDark = html.getAttribute("data-theme") === "light";
-        html.setAttribute("data-theme", isDark ? "dark" : "light");
-        try {
-          localStorage.setItem("theme", isDark ? "dark" : "light");
-        } catch (e) {}
-      }
+      const KEY = "bridge-payslip-v2";
+      const COMPANIES = [
+        {
+          name: "Bridge Digital Transformations, Inc.",
+          logo: "https://ik.imagekit.io/Araminbridge/BridgePRO/Untitled%20design.png",
+        },
+        {
+          name: "Mindanamics Corporation",
+          logo: "https://ik.imagekit.io/Araminbridge/BridgePRO/Mindanamics1.png?updatedAt=1776409947662",
+        },
+      ];
 
-      // Force default LIGHT theme unless user manually changed it
-      try {
-        const saved = localStorage.getItem("theme");
-        if (saved) {
-          document.documentElement.setAttribute("data-theme", saved);
-        } else {
-          document.documentElement.setAttribute("data-theme", "light"); // force light
-        }
-      } catch (e) {
-        document.documentElement.setAttribute("data-theme", "light");
-      }
-
-      /* ── Paper configs ── */
       const PAPER = {
         a4: {
           badge: "A4 · Landscape · 2 copies",
+          info: "A4 landscape · 2 copies per employee",
           copies: ["Employee copy", "Company copy"],
+          perPage: 1,
           orientation: "landscape",
           format: "a4",
+          widthMM: 281,
           pageCSS: "@page { size: A4 landscape; margin: 10mm; }",
         },
         long: {
-          badge: "Long Bond · Portrait · 4 copies",
-          copies: ["Employee copy", "Company copy", "HR copy", "Finance copy"],
+          badge: "Long Bond · Portrait · 2 employees/page",
+          info: "Long Bond portrait · 2 employees per page, 2 copies each",
+          copies: ["Employee copy", "Company copy"],
+          perPage: 2,
           orientation: "portrait",
           format: [216, 330],
+          widthMM: 200,
           pageCSS: "@page { size: 216mm 330mm portrait; margin: 10mm; }",
         },
       };
 
-      function getPaper() {
-        return PAPER[$("paperSize").value] || PAPER.a4;
+      /* ───────── State ───────── */
+      const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const mk = (y, m, d) => {
+        const dim = new Date(y, m + 1, 0).getDate();
+        return iso(new Date(y, m, Math.min(d, dim)));
+      };
+      const parseISO = (s) => {
+        const [y, m, d] = (s || iso(new Date())).split("-").map(Number);
+        return { y, m: m - 1, d };
+      };
+
+      const blankEmp = (o = {}) => ({
+        id: uid(),
+        name: "",
+        pos: "",
+        dept: "BDTI",
+        empId: "",
+        basicDays: "",
+        basicSalary: "",
+        earnings: [],
+        deductions: [],
+        include: true,
+        ...o,
+      });
+
+      function defaultState() {
+        const n = new Date();
+        const e = blankEmp();
+        return {
+          settings: {
+            paper: "a4",
+            company: COMPANIES[0].name,
+            from: mk(n.getFullYear(), n.getMonth(), 1),
+            to: mk(n.getFullYear(), n.getMonth() + 1, 0),
+            preparedBy: "Maricel Lopez",
+          },
+          employees: [e],
+          activeId: e.id,
+          scope: "current",
+        };
       }
 
-      function applyPrintStyle() {
-        const p = getPaper();
-        $("print-style").textContent = `
-        @media print {
-          html, body { background: #ffffff !important; margin: 0 !important; padding: 0 !important; }
-          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .navbar, .form-panel, .copy-label, .panel-head { display: none !important; }
-          .app-grid { display: block; max-width: none; background: #ffffff !important; }
-          .preview-panel, #printArea, .preview-bg { background: #ffffff !important; border: none !important; box-shadow: none !important; }
-          .panel-body { padding: 6mm; }
-          #copiesGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-          ${p.pageCSS}
-        }`;
+      function normalize(raw) {
+        const d = defaultState();
+        if (!raw || typeof raw !== "object" || !Array.isArray(raw.employees)) return d;
+        const s = { ...d.settings, ...(raw.settings || {}) };
+        if (!PAPER[s.paper]) s.paper = "a4";
+        if (!COMPANIES.some((c) => c.name === s.company)) s.company = COMPANIES[0].name;
+        const rows = (a) =>
+          (Array.isArray(a) ? a : []).map((r) => ({
+            id: r.id || uid(),
+            label: String(r.label ?? ""),
+            days: String(r.days ?? ""),
+            amount: String(r.amount ?? ""),
+          }));
+        const emps = raw.employees.map((e) =>
+          blankEmp({
+            id: e.id || uid(),
+            name: String(e.name ?? ""),
+            pos: String(e.pos ?? ""),
+            dept: String(e.dept ?? ""),
+            empId: String(e.empId ?? ""),
+            basicDays: String(e.basicDays ?? ""),
+            basicSalary: String(e.basicSalary ?? ""),
+            earnings: rows(e.earnings),
+            deductions: rows(e.deductions),
+            include: e.include !== false,
+          }),
+        );
+        if (!emps.length) emps.push(blankEmp());
+        return {
+          settings: s,
+          employees: emps,
+          activeId: emps.some((e) => e.id === raw.activeId) ? raw.activeId : emps[0].id,
+          scope: raw.scope === "all" ? "all" : "current",
+        };
       }
 
+      function load() {
+        try {
+          const raw = localStorage.getItem(KEY);
+          if (raw) return normalize(JSON.parse(raw));
+        } catch (e) {}
+        return defaultState();
+      }
+
+      let state = load();
+      const active = () => state.employees.find((e) => e.id === state.activeId) || state.employees[0];
+      const included = () => state.employees.filter((e) => e.include);
+      const getPaper = () => PAPER[state.settings.paper] || PAPER.a4;
+
+      /* ───────── Persistence ───────── */
+      let saveT;
+      function setSaveStatus(kind) {
+        const el = $("saveStatus");
+        el.className = "save-status " + kind;
+        el.innerHTML =
+          kind === "saving"
+            ? '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Saving…</span>'
+            : kind === "saved"
+              ? '<i class="fa-solid fa-check"></i><span>Saved locally</span>'
+              : '<i class="fa-solid fa-triangle-exclamation"></i><span>Not saved</span>';
+      }
+      function flush() {
+        clearTimeout(saveT);
+        try {
+          localStorage.setItem(KEY, JSON.stringify(state));
+          setSaveStatus("saved");
+        } catch (e) {
+          setSaveStatus("error");
+        }
+      }
+      function save() {
+        setSaveStatus("saving");
+        clearTimeout(saveT);
+        saveT = setTimeout(flush, 300);
+      }
+      window.addEventListener("pagehide", flush);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") flush();
+      });
+
+      /* ───────── Theme ───────── */
+      function toggleTheme() {
+        const html = document.documentElement;
+        const next = html.getAttribute("data-theme") === "light" ? "dark" : "light";
+        html.setAttribute("data-theme", next);
+        try {
+          localStorage.setItem("theme", next);
+        } catch (e) {}
+      }
+
+      /* ───────── Toast ───────── */
+      let toastT;
+      function toast(msg, action) {
+        const t = $("toast");
+        t.innerHTML = `<span>${esc(msg)}</span>` + (action ? `<button id="toastAct">${esc(action.label)}</button>` : "");
+        t.classList.add("show");
+        if (action)
+          $("toastAct").onclick = () => {
+            action.fn();
+            t.classList.remove("show");
+          };
+        clearTimeout(toastT);
+        toastT = setTimeout(() => t.classList.remove("show"), action ? 6000 : 2600);
+      }
+
+      /* ───────── Calculations / formatting ───────── */
+      const fmt = (n) =>
+        Number(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       function formatDate(s) {
         if (!s) return "—";
         const [y, m, d] = s.split("-");
         return `${m}/${d}/${y}`;
       }
+      const initials = (n) =>
+        (n || "")
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((w) => w[0].toUpperCase())
+          .join("") || "?";
 
-      function fmt(n) {
-        return Number(n || 0).toLocaleString("en-PH", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
+      function calc(e) {
+        const basic = parseFloat(e.basicSalary) || 0;
+        const earn = [
+          { label: e.basicDays ? `Basic salary (${e.basicDays} days)` : "Basic salary", amount: basic },
+        ];
+        const line = (r) => ({
+          label: r.days.trim() ? `${r.label.trim()} (${r.days.trim()})` : r.label.trim(),
+          amount: parseFloat(r.amount) || 0,
         });
+        e.earnings.filter((r) => r.label.trim()).forEach((r) => earn.push(line(r)));
+        const ded = e.deductions.filter((r) => r.label.trim()).map(line);
+        const gross = earn.reduce((a, r) => a + r.amount, 0);
+        const td = ded.reduce((a, r) => a + r.amount, 0);
+        return { earn, ded, gross, td, net: gross - td };
       }
 
-      function addRow(containerId, type) {
-        const c = $(containerId);
-        const div = document.createElement("div");
-        div.className = "entry-row";
-        const labelHint =
-          type === "earning" ? "e.g. Overtime pay" : "e.g. SSS contribution";
-        div.innerHTML = `
-          <input type="text"   class="label-input"  placeholder="${labelHint}"  oninput="render()">
-          <input type="text"   class="days-input"   placeholder="e.g. 1 day"    oninput="render()">
-          <input type="number" class="amount-input" placeholder="0.00" min="0" step="0.01" oninput="render()">
-          <button class="remove-btn" title="Remove" onclick="this.parentElement.remove(); render()">×</button>`;
-        c.appendChild(div);
-        div.querySelector("input").focus();
-        render();
-      }
-
-      function buildSlipHTML() {
-        const companySelect = $("company");
-        const company = companySelect.value.trim() || "Company";
-        const selectedOption =
-          companySelect.options[companySelect.selectedIndex];
-        const logoUrl = selectedOption
-          ? selectedOption.getAttribute("data-logo") || ""
-          : "";
-
-        const fromLabel = formatDate($("periodFrom").value);
-        const toLabel = formatDate($("periodTo").value);
-        const name = $("empName").value.trim() || "—";
-        const pos = $("empPos").value.trim() || "—";
-        const dept = $("empDept").value.trim() || "—";
-        const empId = $("empId").value.trim() || "—";
-        const basic = parseFloat($("basicSalary").value) || 0;
-        const basicDays = $("basicDays").value.trim();
-
-        let totalEarnings = basic;
-        let basicLabel = basicDays
-          ? `Basic salary (${basicDays} days)`
-          : "Basic salary";
-        let earningsRows = `<div class="slip-line"><span>${basicLabel}</span><span class="amount">₱ ${fmt(basic)}</span></div>`;
-
-        document
-          .querySelectorAll("#earningsContainer .entry-row")
-          .forEach((row) => {
-            const label = row.querySelector(".label-input").value.trim();
-            const days = row.querySelector(".days-input").value.trim();
-            const val =
-              parseFloat(row.querySelector(".amount-input").value) || 0;
-            if (label) {
-              const displayLabel = days ? `${label} (${days})` : label;
-              earningsRows += `<div class="slip-line"><span>${displayLabel}</span><span class="amount">₱ ${fmt(val)}</span></div>`;
-              totalEarnings += val;
-            }
-          });
-
-        let totalDeductions = 0,
-          deductionsRows = "";
-        document
-          .querySelectorAll("#deductionsContainer .entry-row")
-          .forEach((row) => {
-            const label = row.querySelector(".label-input").value.trim();
-            const days = row.querySelector(".days-input").value.trim();
-            const val =
-              parseFloat(row.querySelector(".amount-input").value) || 0;
-            if (label) {
-              const displayLabel = days ? `${label} (${days})` : label;
-              deductionsRows += `<div class="slip-line"><span>${displayLabel}</span><span class="amount">₱ ${fmt(val)}</span></div>`;
-              totalDeductions += val;
-            }
-          });
-
-        if (!deductionsRows)
-          deductionsRows = `<div class="slip-line" style="color:hsl(var(--muted-foreground));font-style:italic">No deductions</div>`;
-
-        const net = totalEarnings - totalDeductions;
-
+      function slipHTML(e) {
+        const s = state.settings;
+        const co = COMPANIES.find((c) => c.name === s.company) || COMPANIES[0];
+        const c = calc(e);
+        const rows = (l) =>
+          l.map((r) => `<div class="slip-line"><span>${esc(r.label)}</span><span class="amount">₱ ${fmt(r.amount)}</span></div>`).join("");
+        const dedRows =
+          rows(c.ded) ||
+          `<div class="slip-line" style="font-style:italic">No deductions</div>`;
         return `
           <div class="slip-header">
             <div>
               <div style="display:flex;align-items:center;gap:7px;margin-bottom:2px;">
-                <img src="${logoUrl}" alt="Logo" style="height:28px;width:auto;object-fit:contain;" crossorigin="anonymous">
-                <div class="slip-company">${company}</div>
+                <img src="${esc(co.logo)}" alt="Logo" style="height:28px;width:auto;object-fit:contain;" crossorigin="anonymous">
+                <div class="slip-company">${esc(co.name)}</div>
               </div>
               <div class="slip-word">Payslip</div>
             </div>
-            <div class="slip-period">${fromLabel} - ${toLabel}</div>
+            <div class="slip-period">${formatDate(s.from)} - ${formatDate(s.to)}</div>
           </div>
           <div class="slip-info">
-            <div class="slip-info-item">Name <strong>${name}</strong></div>
-            <div class="slip-info-item">ID <strong>${empId}</strong></div>
-            <div class="slip-info-item">Position <strong>${pos}</strong></div>
-            <div class="slip-info-item">Department <strong>${dept}</strong></div>
+            <div class="slip-info-item">Name <strong>${esc(e.name.trim() || "—")}</strong></div>
+            <div class="slip-info-item">ID <strong>${esc(e.empId.trim() || "—")}</strong></div>
+            <div class="slip-info-item">Position <strong>${esc(e.pos.trim() || "—")}</strong></div>
+            <div class="slip-info-item">Department <strong>${esc(e.dept.trim() || "—")}</strong></div>
           </div>
           <div class="slip-section-title">Earnings</div>
-          <div class="slip-lines">${earningsRows}</div>
-          <div class="slip-subtotal"><span>Gross earnings</span><span class="amount">₱ ${fmt(totalEarnings)}</span></div>
+          <div class="slip-lines">${rows(c.earn)}</div>
+          <div class="slip-subtotal"><span>Gross earnings</span><span class="amount">₱ ${fmt(c.gross)}</span></div>
           <div class="slip-section-title">Deductions</div>
-          <div class="slip-lines">${deductionsRows}</div>
-          <div class="slip-subtotal"><span>Total deductions</span><span class="amount">₱ ${fmt(totalDeductions)}</span></div>
+          <div class="slip-lines">${dedRows}</div>
+          <div class="slip-subtotal"><span>Total deductions</span><span class="amount">₱ ${fmt(c.td)}</span></div>
           <div class="slip-net">
             <div class="slip-net-label">Net pay</div>
-            <div class="slip-net-amount">₱ ${fmt(net)}</div>
+            <div class="slip-net-amount">₱ ${fmt(c.net)}</div>
           </div>
           <div class="slip-footer">
-            <div>Prepared by: <strong>Maricel Lopez</strong></div>
+            <div>Prepared by: <strong>${esc(s.preparedBy.trim() || "—")}</strong></div>
             <div class="sig-line">Employee signature</div>
           </div>`;
       }
 
-      function render() {
+      /* ───────── Render: roster ───────── */
+      function renderRoster() {
+        const list = state.employees;
+        const sel = included().length;
+        $("rosterTitle").textContent = `Employees · ${list.length}`;
+        $("toggleAll").textContent = sel === list.length ? "Select none" : "Select all";
+        $("roster").innerHTML = list
+          .map((e) => {
+            const c = calc(e);
+            const sub = [e.pos.trim(), `₱ ${fmt(c.net)}`].filter(Boolean).join(" · ");
+            return `<div class="emp-item ${e.id === state.activeId ? "active" : ""}" data-id="${e.id}">
+              <input type="checkbox" class="emp-check" title="Include in batch print" ${e.include ? "checked" : ""}>
+              <button class="emp-main" data-act="open">
+                <span class="emp-avatar">${esc(initials(e.name))}</span>
+                <span class="emp-meta">
+                  <span class="emp-name ${e.name.trim() ? "" : "empty"}">${esc(e.name.trim() || "Unnamed employee")}</span>
+                  <span class="emp-sub">${esc(sub)}</span>
+                </span>
+              </button>
+              <button class="icon-btn" data-act="dup" title="Duplicate (keeps earnings & deductions)"><i class="fa-regular fa-copy"></i></button>
+              <button class="icon-btn danger" data-act="del" title="Delete"><i class="fa-regular fa-trash-can"></i></button>
+            </div>`;
+          })
+          .join("");
+      }
+
+      /* ───────── Render: editor ───────── */
+      function rowsHTML(list, kind) {
+        const hint = kind === "earnings" ? "e.g. Overtime pay" : "e.g. SSS contribution";
+        const dl = kind === "earnings" ? "earningLabels" : "deductionLabels";
+        return list
+          .map(
+            (r) => `<div class="entry-row" data-id="${r.id}">
+              <input type="text" class="label-input" data-f="label" list="${dl}" placeholder="${hint}" value="${esc(r.label)}">
+              <input type="text" class="days-input" data-f="days" placeholder="e.g. 1 day" value="${esc(r.days)}">
+              <input type="number" class="amount-input" data-f="amount" placeholder="0.00" min="0" step="0.01" value="${esc(r.amount)}">
+              <button class="icon-btn danger" data-act="rm" title="Remove">✕</button>
+            </div>`,
+          )
+          .join("");
+      }
+      function renderRows() {
+        const e = active();
+        $("earningsContainer").innerHTML = rowsHTML(e.earnings, "earnings");
+        $("deductionsContainer").innerHTML = rowsHTML(e.deductions, "deductions");
+      }
+      function fillEditor() {
+        const e = active();
+        $("empName").value = e.name;
+        $("empPos").value = e.pos;
+        $("empDept").value = e.dept;
+        $("empId").value = e.empId;
+        $("basicDays").value = e.basicDays;
+        $("basicSalary").value = e.basicSalary;
+        renderRows();
+        updateEditorMeta();
+      }
+      function updateEditorMeta() {
+        const e = active();
+        const c = calc(e);
+        $("editorTitle").textContent = e.name.trim() ? e.name.trim() : "New employee";
+        $("tGross").textContent = "₱ " + fmt(c.gross);
+        $("tDed").textContent = "₱ " + fmt(c.td);
+        $("tNet").textContent = "₱ " + fmt(c.net);
+      }
+
+      /* ───────── Render: preview ───────── */
+      function printList() {
+        return state.scope === "current" ? [active()] : included();
+      }
+      function renderPreview() {
         const p = getPaper();
-        const html = buildSlipHTML();
         const grid = $("copiesGrid");
-        grid.innerHTML = "";
-        p.copies.forEach((label) => {
-          const wrap = document.createElement("div");
-          wrap.innerHTML = `<div class="copy-label">${label}</div><div class="slip">${html}</div>`;
-          grid.appendChild(wrap);
+        const list = printList();
+
+        document.querySelectorAll("#scopeSeg button").forEach((b) => b.classList.toggle("on", b.dataset.scope === state.scope));
+        $("scopeAllBtn").textContent = `All selected (${included().length})`;
+        $("printLabel").textContent = list.length > 1 ? `Print ${list.length}` : "Print";
+        $("paperBadge").textContent = p.badge;
+
+        if (state.scope === "current") {
+          const html = slipHTML(active());
+          grid.innerHTML = p.copies
+            .map((l) => `<div><div class="copy-label">${l}</div><div class="slip">${html}</div></div>`)
+            .join("");
+        } else if (!list.length) {
+          grid.innerHTML = `<div class="preview-empty"><i class="fa-regular fa-square-check" style="font-size:22px;margin-bottom:8px;display:block"></i>Tick at least one employee to print a batch.</div>`;
+        } else {
+          grid.innerHTML = list
+            .map(
+              (e, i) =>
+                `<div><div class="copy-label">${i + 1}. ${esc(e.name.trim() || "Unnamed employee")}</div><div class="slip">${slipHTML(e)}</div></div>`,
+            )
+            .join("");
+        }
+        const n = Math.ceil(list.length / p.perPage);
+        $("previewInfo").innerHTML =
+          `<i class="fa-regular fa-file-lines"></i> Will print <strong>${n}</strong> page${n === 1 ? "" : "s"} · ${p.info}` +
+          (state.scope === "all" ? " (preview shows one copy each)" : "");
+      }
+
+      function refresh() {
+        renderRoster();
+        updateEditorMeta();
+        renderPreview();
+        save();
+      }
+
+      /* ───────── Employee actions ───────── */
+      function setActive(id) {
+        state.activeId = id;
+        fillEditor();
+        renderRoster();
+        renderPreview();
+        save();
+      }
+      function addEmployee() {
+        const cur = active();
+        const e = blankEmp({ dept: cur ? cur.dept : "BDTI" });
+        state.employees.push(e);
+        state.activeId = e.id;
+        fillEditor();
+        renderRoster();
+        renderPreview();
+        save();
+        const r = $("roster");
+        r.scrollTop = r.scrollHeight;
+        $("empName").focus();
+      }
+      function duplicateEmployee(id) {
+        const src = state.employees.find((e) => e.id === id);
+        if (!src) return;
+        const copy = JSON.parse(JSON.stringify(src));
+        const reId = (r) => ({ ...r, id: uid() });
+        copy.id = uid();
+        copy.name = "";
+        copy.empId = "";
+        copy.earnings = copy.earnings.map(reId);
+        copy.deductions = copy.deductions.map(reId);
+        const i = state.employees.findIndex((e) => e.id === id);
+        state.employees.splice(i + 1, 0, copy);
+        state.activeId = copy.id;
+        fillEditor();
+        renderRoster();
+        renderPreview();
+        save();
+        $("empName").focus();
+        toast("Duplicated — enter the new name");
+      }
+      function deleteEmployee(id) {
+        const i = state.employees.findIndex((e) => e.id === id);
+        if (i < 0) return;
+        const [removed] = state.employees.splice(i, 1);
+        let placeholder = null;
+        if (!state.employees.length) state.employees.push((placeholder = blankEmp()));
+        if (state.activeId === id) state.activeId = state.employees[Math.min(i, state.employees.length - 1)].id;
+        fillEditor();
+        renderRoster();
+        renderPreview();
+        save();
+        toast(`Deleted ${removed.name.trim() || "employee"}`, {
+          label: "Undo",
+          fn: () => {
+            if (placeholder) state.employees = state.employees.filter((x) => x !== placeholder);
+            state.employees.splice(Math.min(i, state.employees.length), 0, removed);
+            state.activeId = removed.id;
+            fillEditor();
+            renderRoster();
+            renderPreview();
+            save();
+          },
         });
       }
 
-      function onPaperChange() {
-        $("paperBadge").textContent = getPaper().badge;
-        applyPrintStyle();
-        render();
+      /* ───────── Entry rows ───────── */
+      function addRow(kind) {
+        const e = active();
+        e[kind].push({ id: uid(), label: "", days: "", amount: "" });
+        renderRows();
+        const c = $(kind + "Container");
+        const last = c.lastElementChild;
+        if (last) last.querySelector("input").focus();
+        save();
       }
 
-      function printPayslip() {
+      /* ───────── Pay run settings ───────── */
+      function fillSettings() {
+        const s = state.settings;
+        $("company").innerHTML = COMPANIES.map(
+          (c) => `<option value="${esc(c.name)}" ${c.name === s.company ? "selected" : ""}>${esc(c.name)}</option>`,
+        ).join("");
+        $("paperSize").value = s.paper;
+        $("periodFrom").value = s.from;
+        $("periodTo").value = s.to;
+        $("preparedBy").value = s.preparedBy;
+      }
+      function setPeriod(kind) {
+        const s = state.settings;
+        const f = parseISO(s.from);
+        const t = parseISO(s.to);
+        if (kind === "full") {
+          s.from = mk(f.y, f.m, 1);
+          s.to = mk(f.y, f.m + 1, 0);
+        } else if (kind === "h1") {
+          s.from = mk(f.y, f.m, 1);
+          s.to = mk(f.y, f.m, 15);
+        } else if (kind === "h2") {
+          s.from = mk(f.y, f.m, 16);
+          s.to = mk(f.y, f.m + 1, 0);
+        } else if (kind === "next") {
+          const toIsLast = t.d === new Date(t.y, t.m + 1, 0).getDate();
+          s.from = mk(f.y, f.m + 1, f.d);
+          s.to = toIsLast ? mk(t.y, t.m + 2, 0) : mk(t.y, t.m + 1, t.d);
+        }
+        $("periodFrom").value = s.from;
+        $("periodTo").value = s.to;
+        refresh();
+      }
+
+      /* ───────── Print / PDF ───────── */
+      function applyPrintStyle() {
+        $("print-style").textContent = `
+        @media print {
+          html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          body > *:not(#printRoot) { display: none !important; }
+          #printRoot { display: block !important; }
+          .slip { break-inside: avoid; }
+          ${getPaper().pageCSS}
+        }`;
+      }
+      function pagesHTML(list) {
+        const p = getPaper();
+        const pages = [];
+        for (let i = 0; i < list.length; i += p.perPage) pages.push(list.slice(i, i + p.perPage));
+        return pages
+          .map(
+            (group) =>
+              `<div class="print-page"><div class="print-grid">${group
+                .map((e) => {
+                  const html = slipHTML(e);
+                  return p.copies.map(() => `<div class="slip">${html}</div>`).join("");
+                })
+                .join("")}</div></div>`,
+          )
+          .join("");
+      }
+      function buildPrintRoot() {
+        let list = printList();
+        if (!list.length) list = [active()];
+        $("printRoot").innerHTML = pagesHTML(list);
         applyPrintStyle();
+      }
+      window.addEventListener("beforeprint", buildPrintRoot); // also covers Ctrl/Cmd+P
+
+      function printPayslip() {
+        if (!printList().length) return toast("Tick at least one employee first");
+        buildPrintRoot();
         window.print();
       }
 
       function downloadPDF() {
+        const list = printList();
+        if (!list.length) return toast("Tick at least one employee first");
         const p = getPaper();
-        const el = $("printArea");
-        document.body.classList.add("pdf-mode");
+        const clone = document.createElement("div");
+        clone.className = "pdf-clone";
+        clone.setAttribute("data-theme", "light");
+        clone.style.width = p.widthMM + "mm";
+        clone.innerHTML = pagesHTML(list);
+
+        const btn = $("pdfBtn");
+        const old = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generating…';
+
+        const slug = (s) => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        const filename =
+          list.length === 1
+            ? `payslip-${slug(list[0].name) || "employee"}.pdf`
+            : `payslips-${state.settings.from}-to-${state.settings.to}.pdf`;
+
         html2pdf()
           .set({
             margin: 8,
-            filename: "payslip.pdf",
+            filename,
             image: { type: "jpeg", quality: 0.98 },
-            html2canvas: {
-              scale: 2,
-              useCORS: true,
-              backgroundColor: "#ffffff",
-            },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
             jsPDF: { unit: "mm", format: p.format, orientation: p.orientation },
+            pagebreak: { mode: ["css", "legacy"], avoid: ".slip" },
           })
-          .from(el)
+          .from(clone)
           .save()
-          .then(() => {
-            document.body.classList.remove("pdf-mode");
+          .catch(() => toast("PDF failed — try Print instead"))
+          .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = old;
           });
       }
 
-      document.addEventListener("DOMContentLoaded", () => {
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = String(now.getMonth() + 1).padStart(2, "0");
-        const last = String(
-          new Date(y, now.getMonth() + 1, 0).getDate(),
-        ).padStart(2, "0");
-        $("periodFrom").value = `${y}-${m}-01`;
-        $("periodTo").value = `${y}-${m}-${last}`;
+      /* ───────── Backup ───────── */
+      function exportData() {
+        flush();
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `bridge-payslip-backup-${iso(new Date())}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        toast("Backup downloaded");
+      }
+      function clearAll() {
+        if (!confirm("Delete ALL saved employees and settings? This cannot be undone.")) return;
+        state = defaultState();
+        flush();
+        fillSettings();
+        fillEditor();
+        refresh();
+        toast("All data cleared");
+      }
 
-        [
-          "company",
-          "periodFrom",
-          "periodTo",
-          "empName",
-          "empPos",
-          "empDept",
-          "empId",
-          "basicDays",
-          "basicSalary",
-        ].forEach((id) => {
-          const el = $(id);
-          if (el) el.addEventListener("input", render);
+      /* ───────── Wiring ───────── */
+      document.addEventListener("DOMContentLoaded", () => {
+        fillSettings();
+        fillEditor();
+        renderRoster();
+        renderPreview();
+        setSaveStatus("saved");
+        applyPrintStyle();
+
+        // pay-run settings
+        $("company").addEventListener("change", (e) => ((state.settings.company = e.target.value), refresh()));
+        $("periodFrom").addEventListener("input", (e) => ((state.settings.from = e.target.value), refresh()));
+        $("periodTo").addEventListener("input", (e) => ((state.settings.to = e.target.value), refresh()));
+        $("preparedBy").addEventListener("input", (e) => ((state.settings.preparedBy = e.target.value), refresh()));
+        $("paperSize").addEventListener("change", (e) => {
+          state.settings.paper = e.target.value;
+          applyPrintStyle();
+          refresh();
+        });
+        document.querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => setPeriod(b.dataset.period)));
+
+        // scope toggle
+        document.querySelectorAll("#scopeSeg button").forEach((b) =>
+          b.addEventListener("click", () => {
+            state.scope = b.dataset.scope;
+            renderPreview();
+            save();
+          }),
+        );
+
+        // roster
+        $("roster").addEventListener("click", (ev) => {
+          const item = ev.target.closest(".emp-item");
+          if (!item) return;
+          const id = item.dataset.id;
+          const act = ev.target.closest("[data-act]")?.dataset.act;
+          if (ev.target.classList.contains("emp-check")) return;
+          if (act === "dup") duplicateEmployee(id);
+          else if (act === "del") deleteEmployee(id);
+          else setActive(id);
+        });
+        $("roster").addEventListener("change", (ev) => {
+          if (!ev.target.classList.contains("emp-check")) return;
+          const e = state.employees.find((x) => x.id === ev.target.closest(".emp-item").dataset.id);
+          if (e) e.include = ev.target.checked;
+          renderRoster();
+          renderPreview();
+          save();
+        });
+        $("toggleAll").addEventListener("click", () => {
+          const all = included().length === state.employees.length;
+          state.employees.forEach((e) => (e.include = !all));
+          renderRoster();
+          renderPreview();
+          save();
         });
 
-        $("paperSize").addEventListener("change", onPaperChange);
-        $("paperBadge").textContent = getPaper().badge;
-        applyPrintStyle();
-        render();
+        // editor basics
+        const map = {
+          empName: "name",
+          empPos: "pos",
+          empDept: "dept",
+          empId: "empId",
+          basicDays: "basicDays",
+          basicSalary: "basicSalary",
+        };
+        Object.keys(map).forEach((id) =>
+          $(id).addEventListener("input", (ev) => {
+            active()[map[id]] = ev.target.value;
+            refresh();
+          }),
+        );
+
+        // earnings / deductions rows (delegated)
+        ["earnings", "deductions"].forEach((kind) => {
+          const c = $(kind + "Container");
+          c.addEventListener("input", (ev) => {
+            const f = ev.target.dataset.f;
+            if (!f) return;
+            const r = active()[kind].find((x) => x.id === ev.target.closest(".entry-row").dataset.id);
+            if (r) r[f] = ev.target.value;
+            refresh();
+          });
+          c.addEventListener("click", (ev) => {
+            const btn = ev.target.closest('[data-act="rm"]');
+            if (!btn) return;
+            const id = btn.closest(".entry-row").dataset.id;
+            const e = active();
+            e[kind] = e[kind].filter((x) => x.id !== id);
+            renderRows();
+            refresh();
+          });
+          c.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter" && ev.target.classList.contains("amount-input")) {
+              if (ev.target.closest(".entry-row") === c.lastElementChild) {
+                ev.preventDefault();
+                addRow(kind);
+              }
+            }
+          });
+        });
+
+        // import
+        $("importFile").addEventListener("change", (ev) => {
+          const file = ev.target.files[0];
+          ev.target.value = "";
+          if (!file) return;
+          const fr = new FileReader();
+          fr.onload = () => {
+            try {
+              const next = normalize(JSON.parse(fr.result));
+              if (!confirm(`Import ${next.employees.length} employee(s) and replace current data?`)) return;
+              state = next;
+              flush();
+              fillSettings();
+              fillEditor();
+              renderRoster();
+              renderPreview();
+              toast("Backup imported");
+            } catch (e) {
+              toast("Invalid backup file");
+            }
+          };
+          fr.readAsText(file);
+        });
       });
     </script>
   </body>
